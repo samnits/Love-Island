@@ -1,0 +1,500 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Manrope:wght@400;600;700&display=swap");
+
+:root {
+  --bg-1: #fff6e9;
+  --bg-2: #ffe9d9;
+  --ink: #2d1f16;
+  --muted: #6d5849;
+  --rose: #d44f6f;
+  --rose-dark: #a93655;
+  --peach: #f99f72;
+  --card: rgba(255, 255, 255, 0.82);
+  --line: rgba(45, 31, 22, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 15% 15%, #fffdf8 0%, var(--bg-1) 35%, var(--bg-2) 100%);
+  min-height: 100vh;
+}
+
+.background-blobs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(4px);
+  opacity: 0.35;
+  animation: float 8s ease-in-out infinite;
+}
+
+.blob-1 {
+  width: 250px;
+  height: 250px;
+  background: #ffaec8;
+  left: -40px;
+  top: 40px;
+}
+
+.blob-2 {
+  width: 200px;
+  height: 200px;
+  background: #ffd08a;
+  right: 5%;
+  top: 8%;
+  animation-delay: 1.4s;
+}
+
+.blob-3 {
+  width: 300px;
+  height: 300px;
+  background: #ff8f8f;
+  right: -60px;
+  bottom: -20px;
+  animation-delay: 2.2s;
+}
+
+.app-shell {
+  width: min(1080px, 94vw);
+  margin: 2.2rem auto;
+  display: grid;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: clamp(2rem, 5vw, 3.3rem);
+  letter-spacing: 0.3px;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  color: var(--rose-dark);
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 20px 30px rgba(60, 30, 10, 0.05);
+}
+
+.role-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.auth-switch {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.auth-stack {
+  width: min(100%, 460px);
+}
+
+.auth-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 246, 238, 0.9));
+}
+
+.auth-panel h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3.4vw, 2rem);
+}
+
+.auth-copy {
+  margin: 0.35rem 0 0.85rem;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+#loginMount,
+#signupMount {
+  width: 100%;
+}
+
+.auth-panel .role-btn {
+  min-width: 112px;
+  padding: 0.6rem 1.05rem;
+}
+
+.auth-panel .role-btn.active {
+  background: linear-gradient(90deg, #2b1d16, #4b3429);
+}
+
+.clerk-card {
+  border: 1px solid rgba(45, 31, 22, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 16px 26px rgba(60, 30, 10, 0.1);
+}
+
+.clerk-btn-primary {
+  background: linear-gradient(90deg, var(--rose), var(--peach));
+  color: #fff;
+  border: none;
+}
+
+.role-panel h2 {
+  margin: 0;
+}
+
+.role-switch {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.role-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.role-btn.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.cta {
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 1.1rem;
+  background: linear-gradient(90deg, var(--rose), var(--peach));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.hidden {
+  display: none;
+}
+
+.pending-box {
+  margin-bottom: 1rem;
+}
+
+.pending-box .plain-list {
+  gap: 0.7rem;
+}
+
+.pending-request-item {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 246, 239, 0.92));
+  border: 1px solid rgba(212, 79, 111, 0.24);
+  box-shadow: 0 10px 18px rgba(212, 79, 111, 0.08);
+}
+
+.pending-request-name {
+  display: block;
+  color: var(--rose-dark);
+  margin-bottom: 0.1rem;
+}
+
+.pending-request-message {
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.pending-request-time {
+  color: var(--muted);
+}
+
+#requestSelect {
+  border: 1px solid rgba(212, 79, 111, 0.28);
+  background: linear-gradient(180deg, #fff, #fff7f2);
+}
+
+.send-love-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 241, 0.9));
+}
+
+.send-love-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.send-love-field {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.send-love-field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.send-love-action {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: start;
+}
+
+.send-love-action .cta {
+  min-width: 170px;
+}
+
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.plain-list li {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.65rem 0.8rem;
+}
+
+.reply-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.reply-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.reply-form p {
+  margin: 0;
+}
+
+#myLoveCode {
+  margin-top: 0.2rem;
+  min-height: 1.4rem;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem;
+  background: #fff;
+}
+
+.calendar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.calendar-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.day-cell {
+  min-height: 80px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.3rem;
+  font-size: 0.86rem;
+}
+
+.day-cell.has-event {
+  border-color: #ff7a7a;
+  background: #fff3f3;
+}
+
+.day-label {
+  font-size: 0.73rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.day-number {
+  font-weight: 700;
+}
+
+.event-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--rose);
+}
+
+.events-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.event-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.event-card img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.small-btn {
+  width: fit-content;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.38rem 0.7rem;
+  cursor: pointer;
+}
+
+.event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.danger-btn {
+  border-color: rgba(169, 40, 63, 0.35);
+  color: #8b2138;
+  background: #fff6f7;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    width: min(1120px, 96vw);
+    margin: 1rem auto;
+    gap: 0.85rem;
+  }
+
+  .panel {
+    padding: 0.85rem;
+    border-radius: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.7rem, 8vw, 2.5rem);
+  }
+
+  .auth-copy {
+    margin-bottom: 0.7rem;
+  }
+
+  .auth-panel .auth-switch {
+    gap: 0.45rem;
+  }
+
+  .auth-panel .role-btn {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .send-love-wrap {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .send-love-action {
+    justify-items: stretch;
+  }
+
+  .send-love-action .cta {
+    width: 100%;
+  }
+
+  .day-cell {
+    min-height: 62px;
+  }
+
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    width: 97vw;
+  }
+
+  .panel {
+    padding: 0.75rem;
+  }
+
+  input,
+  select,
+  textarea,
+  .cta {
+    width: 100%;
+  }
+
+  .auth-panel .role-btn {
+    flex: 1 1 calc(50% - 0.3rem);
+  }
+}

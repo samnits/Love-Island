@@ -1,0 +1,23 @@
+{
+  "name": "love-calendar-app",
+  "version": "1.0.0",
+  "description": "Couples app for miss-you requests, photo notes, and calendar events",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@clerk/clerk-js": "^6.7.4",
+    "@clerk/express": "^1.5.7",
+    "@clerk/ui": "^1.6.3",
+    "cloudinary": "^2.9.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.10.1",
+    "pg": "^8.20.0",
+    "sqlite3": "^5.1.7",
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Our Love Calendar</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-blobs" aria-hidden="true">
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+    </div>
+
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Shared Space</p>
+        <h1>Our Love Calendar</h1>
+        <p class="subtitle">Send love, upload memories, and keep every sweet moment on your calendar.</p>
+      </header>
+
+      <section id="authPanel" class="panel auth-panel">
+        <h2>Private Login</h2>
+        <p class="auth-copy">Use email login/signup powered by Clerk. Only you and your partner can access your memories.</p>
+        <div class="auth-switch" role="tablist" aria-label="Auth mode">
+          <button id="showLoginBtn" class="role-btn active" type="button">Login</button>
+          <button id="showSignupBtn" class="role-btn" type="button">Sign Up</button>
+        </div>
+        <div class="auth-stack">
+          <div id="loginMount"></div>
+          <div id="signupMount" class="hidden"></div>
+        </div>
+        <p id="authHint" class="hint"></p>
+      </section>
+
+      <div id="appPanel" class="hidden">
+        <section class="panel role-panel">
+          <div>
+            <h2 id="welcomeTitle">Welcome</h2>
+            <p id="partnerState" class="hint"></p>
+          </div>
+          <button id="logoutBtn" class="small-btn" type="button">Logout</button>
+        </section>
+
+        <section class="panel">
+          <h2>Connect With Love Code</h2>
+          <p>Generate your code and share it with your partner, or join using your partner's code.</p>
+          <div class="auth-grid">
+            <div class="reply-form">
+              <h3>Generate Love Code</h3>
+              <button id="generateCodeBtn" class="cta" type="button">Generate Unique Love Code</button>
+              <p id="myLoveCode" class="hint"></p>
+              <button id="disconnectPartnerBtn" class="small-btn hidden" type="button">Disconnect Partner</button>
+            </div>
+            <form id="joinCodeForm" class="reply-form">
+              <h3>Join Using Love Code</h3>
+              <label>
+                Partner Love Code
+                <input id="joinCodeInput" type="text" placeholder="AB12CD34" required />
+              </label>
+              <button class="cta" type="submit">Connect Partner</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel send-love-panel">
+          <h2>Send Love</h2>
+          <p>Click this and tell your partner that you miss him.</p>
+          <div class="send-love-wrap">
+            <label class="send-love-field" for="missYouMessage">
+              Your Message
+              <textarea
+                id="missYouMessage"
+                rows="3"
+                maxlength="500"
+                placeholder="Write a sweet custom message..."
+              ></textarea>
+            </label>
+            <div class="send-love-action">
+              <button id="missYouBtn" class="cta" type="button">I Miss You</button>
+              <small class="hint">Your custom message is sent in-app and by email.</small>
+            </div>
+          </div>
+        </section>
+
+        <section id="replyPanel" class="panel">
+          <h2>Reply With Photo + Cute Note</h2>
+          <p>Reply to pending requests sent to you.</p>
+
+          <div class="pending-box">
+            <h3>Pending Miss-You Requests</h3>
+            <ul id="pendingList" class="plain-list"></ul>
+          </div>
+
+          <form id="replyForm" class="reply-form">
+            <label>
+              Select Request
+              <select id="requestSelect" name="requestId" required></select>
+            </label>
+
+            <label>
+              Upload Photo
+              <input id="photoInput" name="photo" type="file" accept="image/*" required />
+            </label>
+
+            <label>
+              Cute Message
+              <textarea id="noteInput" name="note" rows="4" placeholder="Write something sweet..." required></textarea>
+            </label>
+
+            <label>
+              Save Date In Calendar
+              <input id="eventDateInput" name="eventDate" type="date" required />
+            </label>
+
+            <button class="cta" type="submit">Send Cute Reply</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Notifications</h2>
+          <ul id="notificationsList" class="plain-list"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="calendar-head">
+            <h2>Calendar Memory</h2>
+            <input id="monthPicker" type="month" />
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="eventsList" class="events-list"></div>
+        </section>
+      </div>
+    </main>
+
+    <script data-clerk-publishable-key="__CLERK_PUBLISHABLE_KEY__" src="/vendor/clerk.browser.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
