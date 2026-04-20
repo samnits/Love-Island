@@ -30,6 +30,7 @@ const joinCodeForm = document.getElementById("joinCodeForm");
 const joinCodeInput = document.getElementById("joinCodeInput");
 const missYouBtn = document.getElementById("missYouBtn");
 const missYouMessageInput = document.getElementById("missYouMessage");
+const actionStatus = document.getElementById("actionStatus");
 const pendingList = document.getElementById("pendingList");
 const requestSelect = document.getElementById("requestSelect");
 const replyForm = document.getElementById("replyForm");
@@ -309,6 +310,10 @@ async function disconnectPartner() {
 
 async function sendMissYou() {
   const message = (missYouMessageInput?.value || "").trim();
+  if (actionStatus) {
+    actionStatus.textContent = "Sending your message...";
+    actionStatus.className = "hint action-status";
+  }
 
   try {
     const result = await api("/api/miss-you", {
@@ -317,10 +322,20 @@ async function sendMissYou() {
       body: JSON.stringify({ message })
     });
 
+    const emailReason = result?.email?.reason ? ` Reason: ${result.email.reason}` : "";
+    const successMessage = result.email && result.email.sent
+      ? "Miss-you sent. Partner got in-app + email notification."
+      : `Miss-you sent in-app, but email was not sent.${emailReason}`;
+
+    if (actionStatus) {
+      actionStatus.textContent = successMessage;
+      actionStatus.className = `hint action-status ${result.email && result.email.sent ? "success" : "error"}`;
+    }
+
     if (result.email && result.email.sent) {
       alert("Miss-you sent. Partner got in-app + email notification.");
     } else {
-      alert("Miss-you sent in-app. Email not sent yet (configure SMTP on server).");
+      alert(successMessage);
     }
 
     if (missYouMessageInput) {
@@ -329,6 +344,10 @@ async function sendMissYou() {
 
     await loadNotifications();
   } catch (error) {
+    if (actionStatus) {
+      actionStatus.textContent = error.message || "Could not send miss-you message.";
+      actionStatus.className = "hint action-status error";
+    }
     alert(error.message);
   }
 }

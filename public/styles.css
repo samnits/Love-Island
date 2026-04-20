@@ -278,6 +278,18 @@ body {
   min-width: 170px;
 }
 
+.action-status {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.action-status.success {
+  color: #1b7f4c;
+}
+
+.action-status.error {
+  color: #b33a3a;
+}
 .plain-list {
   list-style: none;
   margin: 0;

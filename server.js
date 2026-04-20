@@ -598,6 +598,7 @@ app.get("/api/partner/status", requireAuth(), attachProfile, async (req, res) =>
 app.post("/api/miss-you", requireAuth(), attachProfile, async (req, res) => {
   try {
     const customMessage = String(req.body?.message || "").trim().slice(0, 500);
+    console.log(`[MISS] Request from profile ${req.profile?.id}`);
 
     const me = await dbGet(
       `
@@ -639,8 +640,9 @@ app.post("/api/miss-you", requireAuth(), attachProfile, async (req, res) => {
         fromName: me.name,
         customMessage
       });
-    } catch (_mailErr) {
-      emailStatus = { sent: false, reason: "Email sending failed." };
+    } catch (mailErr) {
+      emailStatus = { sent: false, reason: mailErr?.message || "Email sending failed." };
+      console.error(`[MISS] Email send failed:`, mailErr?.message || mailErr);
     }
 
     broadcastToProfile(partner.id, "miss-you:created", { requestId: requestInsert.lastID });
@@ -650,7 +652,8 @@ app.post("/api/miss-you", requireAuth(), attachProfile, async (req, res) => {
       requestId: requestInsert.lastID,
       email: emailStatus
     });
-  } catch (_err) {
+  } catch (err) {
+    console.error(`[MISS] Error:`, err?.message || err);
     return res.status(500).json({ error: "Could not create request." });
   }
 });
