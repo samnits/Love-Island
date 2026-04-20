@@ -269,7 +269,7 @@ function broadcastToProfile(profileId, event, payload = {}) {
 async function getOrCreateProfile(clerkUserId) {
   let profile = await dbGet(
     `
-      SELECT id, clerk_user_id AS clerkUserId, name, email, love_code AS loveCode, partner_id AS partnerId
+      SELECT id, clerk_user_id AS "clerkUserId", name, email, love_code AS "loveCode", partner_id AS "partnerId"
       FROM profiles
       WHERE clerk_user_id = ?
     `,
@@ -297,7 +297,7 @@ async function getOrCreateProfile(clerkUserId) {
 
   profile = await dbGet(
     `
-      SELECT id, clerk_user_id AS clerkUserId, name, email, love_code AS loveCode, partner_id AS partnerId
+      SELECT id, clerk_user_id AS "clerkUserId", name, email, love_code AS "loveCode", partner_id AS "partnerId"
       FROM profiles
       WHERE id = ?
     `,
@@ -426,7 +426,7 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
       throw new Error(`Invalid requester profile id: ${req.profile.id}`);
     }
 
-    const me = await dbGet(`SELECT id, partner_id AS partnerId FROM profiles WHERE id = ?`, [meId]);
+    const me = await dbGet(`SELECT id, partner_id AS "partnerId" FROM profiles WHERE id = ?`, [meId]);
     if (!me) {
       return res.status(404).json({ error: "Profile not found." });
     }
@@ -438,7 +438,7 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
 
     const partner = await dbGet(
       `
-        SELECT id, name, email, partner_id AS partnerId
+        SELECT id, name, email, partner_id AS "partnerId"
         FROM profiles
         WHERE love_code = ?
       `,
@@ -478,7 +478,7 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
 
     const updatedMe = await dbGet(
       `
-        SELECT id, name, email, love_code AS loveCode, partner_id AS partnerId
+        SELECT id, name, email, love_code AS "loveCode", partner_id AS "partnerId"
         FROM profiles
         WHERE id = ?
       `,
@@ -486,7 +486,7 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
     );
     const updatedPartner = await dbGet(
       `
-        SELECT id, name, email, partner_id AS partnerId
+        SELECT id, name, email, partner_id AS "partnerId"
         FROM profiles
         WHERE id = ?
       `,
@@ -523,7 +523,7 @@ app.post("/api/partner/disconnect", requireAuth(), attachProfile, async (req, re
   try {
     const me = await dbGet(
       `
-        SELECT id, name, partner_id AS partnerId
+        SELECT id, name, partner_id AS "partnerId"
         FROM profiles
         WHERE id = ?
       `,
@@ -574,7 +574,7 @@ app.get("/api/partner/status", requireAuth(), attachProfile, async (req, res) =>
   try {
     const me = await dbGet(
       `
-        SELECT id, name, email, love_code AS loveCode, partner_id AS partnerId
+        SELECT id, name, email, love_code AS "loveCode", partner_id AS "partnerId"
         FROM profiles
         WHERE id = ?
       `,
@@ -601,7 +601,7 @@ app.post("/api/miss-you", requireAuth(), attachProfile, async (req, res) => {
 
     const me = await dbGet(
       `
-        SELECT id, name, email, partner_id AS partnerId
+        SELECT id, name, email, partner_id AS "partnerId"
         FROM profiles
         WHERE id = ?
       `,
@@ -663,10 +663,10 @@ app.get("/api/requests", requireAuth(), attachProfile, async (req, res) => {
           r.id,
           r.status,
           r.message,
-          r.created_at AS createdAt,
-          r.from_user AS fromUserId,
-          r.to_user AS toUserId,
-          p.name AS fromName
+          r.created_at AS "createdAt",
+          r.from_user AS "fromUserId",
+          r.to_user AS "toUserId",
+          p.name AS "fromName"
         FROM miss_requests r
         INNER JOIN profiles p ON p.id = CAST(r.from_user AS INTEGER)
         WHERE r.to_user = ? AND r.status = 'pending'
@@ -690,7 +690,7 @@ app.post("/api/reply", requireAuth(), attachProfile, upload.single("photo"), asy
   try {
     const requestRow = await dbGet(
       `
-        SELECT id, status, message, from_user AS fromUserId, to_user AS toUserId
+        SELECT id, status, message, from_user AS "fromUserId", to_user AS "toUserId"
         FROM miss_requests
         WHERE id = ?
       `,
@@ -776,9 +776,9 @@ app.get("/api/notifications", requireAuth(), attachProfile, async (req, res) => 
           user,
           message,
           type,
-          related_entry_id AS relatedEntryId,
-          is_read AS isRead,
-          created_at AS createdAt
+          related_entry_id AS "relatedEntryId",
+          is_read AS "isRead",
+          created_at AS "createdAt"
         FROM notifications
         WHERE "user" = ?
         ORDER BY datetime(created_at) DESC
@@ -813,11 +813,11 @@ app.delete("/api/entries/:id", requireAuth(), attachProfile, async (req, res) =>
       `
         SELECT
           id,
-          request_id AS requestId,
-          from_user AS fromUser,
-          to_user AS toUser,
-          image_path AS imagePath,
-          cloudinary_public_id AS cloudinaryPublicId
+          request_id AS "requestId",
+          from_user AS "fromUser",
+          to_user AS "toUser",
+          image_path AS "imagePath",
+          cloudinary_public_id AS "cloudinaryPublicId"
         FROM entries
         WHERE id = ?
       `,
@@ -869,14 +869,14 @@ app.get("/api/calendar", requireAuth(), attachProfile, async (req, res) => {
   let sql = `
     SELECT
       e.id,
-      e.request_id AS requestId,
+      e.request_id AS "requestId",
       e.note,
-      r.message AS missMessage,
-      e.image_path AS imagePath,
-      e.event_date AS eventDate,
-      e.created_at AS createdAt,
-      pf.name AS fromName,
-      pt.name AS toName
+      r.message AS "missMessage",
+      e.image_path AS "imagePath",
+      e.event_date AS "eventDate",
+      e.created_at AS "createdAt",
+      pf.name AS "fromName",
+      pt.name AS "toName"
     FROM entries e
     LEFT JOIN miss_requests r ON r.id = e.request_id
     INNER JOIN profiles pf ON pf.id = CAST(e.from_user AS INTEGER)
