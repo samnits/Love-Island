@@ -180,9 +180,53 @@ function createTransporter() {
 
 const mailTransporter = createTransporter();
 
+async function sendMailViaResend(mailOptions) {
+  const resendApiKey = String(process.env.RESEND_API_KEY || "").trim();
+  const resendFrom = String(process.env.RESEND_FROM || process.env.SMTP_FROM || "").trim();
+  if (!resendApiKey || !resendFrom) {
+    return { sent: false, reason: "Resend is not configured." };
+  }
+
+  if (typeof fetch !== "function") {
+    return { sent: false, reason: "Fetch is unavailable in current Node runtime." };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const toList = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: resendFrom,
+        to: toList,
+        subject: mailOptions.subject,
+        html: mailOptions.html
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "");
+      return { sent: false, reason: `Resend failed (${response.status}): ${errorBody || response.statusText}` };
+    }
+
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, reason: err?.name === "AbortError" ? "Resend request timeout." : err?.message || "Resend request failed." };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function sendMailWithFallback(mailOptions) {
   if (!mailTransporter) {
-    return { sent: false, reason: "SMTP is not configured." };
+    return sendMailViaResend(mailOptions);
   }
 
   try {
@@ -217,11 +261,20 @@ async function sendMailWithFallback(mailOptions) {
         await fallbackTransporter.sendMail(mailOptions);
         return { sent: true };
       } catch (retryErr) {
-        return { sent: false, reason: retryErr?.message || "Email sending failed." };
+        const resendResult = await sendMailViaResend(mailOptions);
+        if (resendResult.sent) {
+          return resendResult;
+        }
+        return { sent: false, reason: retryErr?.message || resendResult.reason || "Email sending failed." };
       }
     }
 
-    return { sent: false, reason: err?.message || "Email sending failed." };
+    const resendResult = await sendMailViaResend(mailOptions);
+    if (resendResult.sent) {
+      return resendResult;
+    }
+
+    return { sent: false, reason: err?.message || resendResult.reason || "Email sending failed." };
   }
 }
 
