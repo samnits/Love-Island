@@ -20,6 +20,15 @@ const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging for debugging
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    console.log(`[${req.method}] ${req.path}`);
+  }
+  next();
+});
+
 app.use(clerkMiddleware());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/clerk-ui", express.static(path.join(__dirname, "node_modules", "@clerk", "ui", "dist")));
@@ -389,24 +398,32 @@ app.post("/api/ws-token", requireAuth(), attachProfile, (req, res) => {
 });
 
 app.post("/api/partner/generate-code", requireAuth(), attachProfile, async (req, res) => {
+  console.log(`[GEN] Starting code generation for profile ${req.profile?.id}`);
   try {
     const code = await ensureUniqueLoveCode();
+    console.log(`[GEN] Generated code: ${code}`);
     await dbRun(`UPDATE profiles SET love_code = ? WHERE id = ?`, [code, req.profile.id]);
+    console.log(`[GEN] Updated database with code for profile ${req.profile.id}`);
     return res.json({ loveCode: code });
-  } catch (_err) {
+  } catch (err) {
+    console.error(`[GEN] Error:`, err.message || err);
     return res.status(500).json({ error: "Could not generate love code." });
   }
 });
 
 app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => {
+  console.log(`[JOIN] Starting join process for profile ${req.profile?.id}`);
   const { code } = req.body;
   if (!code) {
+    console.log(`[JOIN] No code provided`);
     return res.status(400).json({ error: "Love code is required." });
   }
 
   try {
+    console.log(`[JOIN] Looking for code: ${code}`);
     const me = await dbGet(`SELECT id, partner_id AS partnerId FROM profiles WHERE id = ?`, [req.profile.id]);
     if (me.partnerId) {
+      console.log(`[JOIN] Profile ${req.profile.id} already has partner ${me.partnerId}`);
       return res.status(400).json({ error: "You are already connected with a partner." });
     }
 
@@ -420,24 +437,30 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
     );
 
     if (!partner) {
+      console.log(`[JOIN] No partner found with code: ${code}`);
       return res.status(404).json({ error: "Invalid love code." });
     }
 
     if (partner.id === req.profile.id) {
+      console.log(`[JOIN] User trying to connect with own code`);
       return res.status(400).json({ error: "You cannot connect with your own code." });
     }
 
     if (partner.partnerId) {
+      console.log(`[JOIN] Partner ${partner.id} already has partner ${partner.partnerId}`);
       return res.status(400).json({ error: "This love code is already connected to someone." });
     }
 
+    console.log(`[JOIN] Connecting ${req.profile.id} with ${partner.id}`);
     await dbRun(`UPDATE profiles SET partner_id = ? WHERE id = ?`, [partner.id, req.profile.id]);
     await dbRun(`UPDATE profiles SET partner_id = ?, love_code = NULL WHERE id = ?`, [req.profile.id, partner.id]);
     await dbRun(`UPDATE profiles SET love_code = NULL WHERE id = ?`, [req.profile.id]);
 
     broadcastToProfile(partner.id, "partner:connected", {});
+    console.log(`[JOIN] Successfully connected ${req.profile.id} with ${partner.id}`);
     return res.json({ success: true });
-  } catch (_err) {
+  } catch (err) {
+    console.error(`[JOIN] Error:`, err.message || err);
     return res.status(500).json({ error: "Could not join using love code." });
   }
 });
