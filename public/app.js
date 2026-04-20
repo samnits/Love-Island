@@ -627,6 +627,28 @@ function handleSignedOut() {
   setAppVisibility(false);
 }
 
+async function syncAuthState() {
+  if (state.isBootstrapping) {
+    return;
+  }
+
+  if (window.Clerk && (window.Clerk.user || window.Clerk.session)) {
+    const nextSessionId = window.Clerk.session?.id || null;
+    if (state.activeSessionId !== nextSessionId || !state.user) {
+      state.activeSessionId = nextSessionId;
+      await bootstrapApp();
+    }
+    return;
+  }
+
+  if (state.user) {
+    handleSignedOut();
+  }
+
+  setAuthMode("login");
+  await mountClerk("login");
+}
+
 async function mountClerk(mode) {
   if (!window.Clerk) {
     authHint.textContent = "Clerk script not loaded.";
@@ -724,6 +746,16 @@ async function initClerk() {
       }
     });
 
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        void syncAuthState();
+      }
+    });
+
+    window.addEventListener("focus", () => {
+      void syncAuthState();
+    });
+
     if (window.Clerk.user || window.Clerk.session) {
       state.activeSessionId = window.Clerk.session?.id || null;
       await bootstrapApp();
@@ -732,6 +764,8 @@ async function initClerk() {
       await mountClerk("login");
       handleSignedOut();
     }
+
+    void syncAuthState();
   } catch (error) {
     authHint.textContent = error.message || "Clerk init failed.";
   }
