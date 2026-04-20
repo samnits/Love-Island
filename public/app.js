@@ -266,13 +266,21 @@ async function joinLoveCode(event) {
   event.preventDefault();
   try {
     const normalizedCode = String(joinCodeInput.value || "").trim().toUpperCase();
-    await api("/api/partner/join", {
+    const data = await api("/api/partner/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: normalizedCode })
     });
+
+    if (data?.partner) {
+      state.partner = data.partner;
+    }
+    state.loveCode = data?.me?.loveCode || null;
+    renderIdentity();
+
     joinCodeForm.reset();
-    await Promise.all([loadProfile(), loadPartnerStatus(), loadNotifications(), loadPendingRequests(), loadCalendar()]);
+    await Promise.all([loadNotifications(), loadPendingRequests(), loadCalendar()]);
+    await loadPartnerStatus();
     alert("Connected with your partner.");
   } catch (error) {
     alert(error.message);

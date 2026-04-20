@@ -456,9 +456,23 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
     await dbRun(`UPDATE profiles SET partner_id = ?, love_code = NULL WHERE id = ?`, [req.profile.id, partner.id]);
     await dbRun(`UPDATE profiles SET love_code = NULL WHERE id = ?`, [req.profile.id]);
 
+    const updatedMe = await dbGet(
+      `
+        SELECT id, name, email, love_code AS loveCode, partner_id AS partnerId
+        FROM profiles
+        WHERE id = ?
+      `,
+      [req.profile.id]
+    );
+    const updatedPartner = await dbGet(`SELECT id, name, email FROM profiles WHERE id = ?`, [partner.id]);
+
     broadcastToProfile(partner.id, "partner:connected", {});
     console.log(`[JOIN] Successfully connected ${req.profile.id} with ${partner.id}`);
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      me: updatedMe,
+      partner: updatedPartner
+    });
   } catch (err) {
     console.error(`[JOIN] Error:`, err.message || err);
     return res.status(500).json({ error: "Could not join using love code." });
