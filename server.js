@@ -154,22 +154,76 @@ async function ensureUniqueLoveCode() {
 }
 
 function createTransporter() {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  const smtpHost = String(process.env.SMTP_HOST || "").trim();
+  const smtpUser = String(process.env.SMTP_USER || "").trim();
+  const smtpPassRaw = String(process.env.SMTP_PASS || "").trim();
+  const smtpPass = /gmail\.com$/i.test(smtpHost) ? smtpPassRaw.replace(/\s+/g, "") : smtpPassRaw;
+
+  if (!smtpHost || !smtpUser || !smtpPass) {
     return null;
   }
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host: smtpHost,
     port: Number(process.env.SMTP_PORT || 587),
     secure: Number(process.env.SMTP_PORT || 587) === 465,
+    requireTLS: Number(process.env.SMTP_PORT || 587) === 587,
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: smtpUser,
+      pass: smtpPass
     }
   });
 }
 
 const mailTransporter = createTransporter();
+
+async function sendMailWithFallback(mailOptions) {
+  if (!mailTransporter) {
+    return { sent: false, reason: "SMTP is not configured." };
+  }
+
+  try {
+    await mailTransporter.sendMail(mailOptions);
+    return { sent: true };
+  } catch (err) {
+    const host = String(process.env.SMTP_HOST || "").trim().toLowerCase();
+    const port = Number(process.env.SMTP_PORT || 587);
+    const isTimeout = String(err?.code || "").toUpperCase() === "ETIMEDOUT" || /timeout/i.test(String(err?.message || ""));
+
+    // Some hosted environments intermittently fail on Gmail STARTTLS:587. Retry once via SSL:465.
+    if (isTimeout && host === "smtp.gmail.com" && port === 587) {
+      try {
+        const smtpUser = String(process.env.SMTP_USER || "").trim();
+        const smtpPass = String(process.env.SMTP_PASS || "")
+          .trim()
+          .replace(/\s+/g, "");
+
+        const fallbackTransporter = nodemailer.createTransport({
+          host: "smtp.gmail.com",
+          port: 465,
+          secure: true,
+          connectionTimeout: 15000,
+          greetingTimeout: 10000,
+          socketTimeout: 20000,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass
+          }
+        });
+
+        await fallbackTransporter.sendMail(mailOptions);
+        return { sent: true };
+      } catch (retryErr) {
+        return { sent: false, reason: retryErr?.message || "Email sending failed." };
+      }
+    }
+
+    return { sent: false, reason: err?.message || "Email sending failed." };
+  }
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -181,10 +235,6 @@ function escapeHtml(value) {
 }
 
 async function sendMissYouEmail({ toEmail, toName, fromName, customMessage }) {
-  if (!mailTransporter) {
-    return { sent: false, reason: "SMTP is not configured." };
-  }
-
   const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
   const safeFromName = escapeHtml(fromName);
   const safeToName = escapeHtml(toName);
@@ -207,21 +257,15 @@ async function sendMissYouEmail({ toEmail, toName, fromName, customMessage }) {
     </div>
   `;
 
-  await mailTransporter.sendMail({
+  return sendMailWithFallback({
     from: fromAddress,
     to: toEmail,
     subject,
     html
   });
-
-  return { sent: true };
 }
 
 async function sendCuteReplyEmail({ toEmail, toName, fromName, cuteReply }) {
-  if (!mailTransporter) {
-    return { sent: false, reason: "SMTP is not configured." };
-  }
-
   const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
   const safeFromName = escapeHtml(fromName);
   const safeToName = escapeHtml(toName);
@@ -242,14 +286,12 @@ async function sendCuteReplyEmail({ toEmail, toName, fromName, cuteReply }) {
     </div>
   `;
 
-  await mailTransporter.sendMail({
+  return sendMailWithFallback({
     from: fromAddress,
     to: toEmail,
     subject,
     html
   });
-
-  return { sent: true };
 }
 
 function broadcastToProfile(profileId, event, payload = {}) {
