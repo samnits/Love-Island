@@ -421,9 +421,18 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
 
   try {
     console.log(`[JOIN] Looking for code: ${code}`);
-    const me = await dbGet(`SELECT id, partner_id AS partnerId FROM profiles WHERE id = ?`, [req.profile.id]);
+    const meId = Number(req.profile.id);
+    if (!Number.isInteger(meId) || meId <= 0) {
+      throw new Error(`Invalid requester profile id: ${req.profile.id}`);
+    }
+
+    const me = await dbGet(`SELECT id, partner_id AS partnerId FROM profiles WHERE id = ?`, [meId]);
+    if (!me) {
+      return res.status(404).json({ error: "Profile not found." });
+    }
+
     if (me.partnerId) {
-      console.log(`[JOIN] Profile ${req.profile.id} already has partner ${me.partnerId}`);
+      console.log(`[JOIN] Profile ${meId} already has partner ${me.partnerId}`);
       return res.status(400).json({ error: "You are already connected with a partner." });
     }
 
@@ -441,7 +450,12 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
       return res.status(404).json({ error: "Invalid love code." });
     }
 
-    if (partner.id === req.profile.id) {
+    const partnerId = Number(partner.id);
+    if (!Number.isInteger(partnerId) || partnerId <= 0) {
+      throw new Error(`Invalid partner id for code ${code}: ${partner.id}`);
+    }
+
+    if (partnerId === meId) {
       console.log(`[JOIN] User trying to connect with own code`);
       return res.status(400).json({ error: "You cannot connect with your own code." });
     }
@@ -451,10 +465,16 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
       return res.status(400).json({ error: "This love code is already connected to someone." });
     }
 
-    console.log(`[JOIN] Connecting ${req.profile.id} with ${partner.id}`);
-    await dbRun(`UPDATE profiles SET partner_id = ? WHERE id = ?`, [partner.id, req.profile.id]);
-    await dbRun(`UPDATE profiles SET partner_id = ?, love_code = NULL WHERE id = ?`, [req.profile.id, partner.id]);
-    await dbRun(`UPDATE profiles SET love_code = NULL WHERE id = ?`, [req.profile.id]);
+    console.log(`[JOIN] Connecting ${meId} with ${partnerId}`);
+    const updateMe = await dbRun(`UPDATE profiles SET partner_id = ? WHERE id = ?`, [partnerId, meId]);
+    const updatePartner = await dbRun(`UPDATE profiles SET partner_id = ?, love_code = NULL WHERE id = ?`, [meId, partnerId]);
+    const clearMeCode = await dbRun(`UPDATE profiles SET love_code = NULL WHERE id = ?`, [meId]);
+
+    if (updateMe.changes !== 1 || updatePartner.changes !== 1 || clearMeCode.changes !== 1) {
+      throw new Error(
+        `Join update mismatch: me=${updateMe.changes}, partner=${updatePartner.changes}, clear=${clearMeCode.changes}`
+      );
+    }
 
     const updatedMe = await dbGet(
       `
@@ -462,16 +482,36 @@ app.post("/api/partner/join", requireAuth(), attachProfile, async (req, res) => 
         FROM profiles
         WHERE id = ?
       `,
-      [req.profile.id]
+      [meId]
     );
-    const updatedPartner = await dbGet(`SELECT id, name, email FROM profiles WHERE id = ?`, [partner.id]);
+    const updatedPartner = await dbGet(
+      `
+        SELECT id, name, email, partner_id AS partnerId
+        FROM profiles
+        WHERE id = ?
+      `,
+      [partnerId]
+    );
 
-    broadcastToProfile(partner.id, "partner:connected", {});
-    console.log(`[JOIN] Successfully connected ${req.profile.id} with ${partner.id}`);
+    if (!updatedMe || !updatedPartner) {
+      throw new Error("Missing post-join profile state.");
+    }
+    if (Number(updatedMe.partnerId) !== partnerId || Number(updatedPartner.partnerId) !== meId) {
+      throw new Error(
+        `Pair verification failed: me.partnerId=${updatedMe.partnerId}, partner.partnerId=${updatedPartner.partnerId}`
+      );
+    }
+
+    broadcastToProfile(partnerId, "partner:connected", {});
+    console.log(`[JOIN] Successfully connected ${meId} with ${partnerId}`);
     return res.json({
       success: true,
       me: updatedMe,
-      partner: updatedPartner
+      partner: {
+        id: updatedPartner.id,
+        name: updatedPartner.name,
+        email: updatedPartner.email
+      }
     });
   } catch (err) {
     console.error(`[JOIN] Error:`, err.message || err);
