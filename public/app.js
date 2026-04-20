@@ -75,10 +75,12 @@ async function api(url, options = {}) {
   const headers = new Headers(options.headers || {});
   const token = await getBearerToken();
   headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Cache-Control", "no-store");
 
   const response = await fetch(url, {
     ...options,
-    headers
+    headers,
+    cache: "no-store"
   });
 
   if (!response.ok) {
@@ -244,7 +246,7 @@ async function loadProfile() {
 }
 
 async function loadPartnerStatus() {
-  const data = await api("/api/partner/status");
+  const data = await api(`/api/partner/status?t=${Date.now()}`);
   state.partner = data.partner;
   state.loveCode = data.me.loveCode || null;
   renderIdentity();
@@ -263,13 +265,14 @@ async function generateLoveCode() {
 async function joinLoveCode(event) {
   event.preventDefault();
   try {
+    const normalizedCode = String(joinCodeInput.value || "").trim().toUpperCase();
     await api("/api/partner/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: joinCodeInput.value })
+      body: JSON.stringify({ code: normalizedCode })
     });
     joinCodeForm.reset();
-    await loadPartnerStatus();
+    await Promise.all([loadProfile(), loadPartnerStatus(), loadNotifications(), loadPendingRequests(), loadCalendar()]);
     alert("Connected with your partner.");
   } catch (error) {
     alert(error.message);
