@@ -610,8 +610,10 @@ async function bootstrapApp() {
     // Keep app panel visible for signed-in users even if a data call fails.
     setAppVisibility(true);
     authHint.textContent = error.message || "Could not fully load app data.";
+    console.error("Bootstrap error:", error);
   } finally {
     state.isBootstrapping = false;
+    console.log("Bootstrap complete. state.user:", state.user?.name, "state.partner:", state.partner?.name);
   }
 }
 
